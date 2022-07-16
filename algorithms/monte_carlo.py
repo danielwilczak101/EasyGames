@@ -92,7 +92,8 @@ class MonteCarlo(GameTree[T], ABC):
                             moves.append(random.choices(
                                 next_moves,
                                 weights=[
-                                    min((2 * wins + ties + 1) / (wins + ties + losses + 1), 0.01)
+                                    (2 * wins + ties + 1) /
+                                    (wins + ties + losses + 1)
                                     for wins, ties, losses in self.states[moves[-1]].values()
                                 ],
                             )[0])
@@ -104,12 +105,15 @@ class MonteCarlo(GameTree[T], ABC):
                     for i in reversed(range(1, len(moves))):
                         wins, ties, losses = self.states[moves[i - 1]][moves[i]]
                         if result is FinishedGame.LOST:
-                            self.states[moves[i - 1]][moves[i]] = (wins + 1, ties, losses)
+                            self.states[moves[i - 1]][moves[i]
+                                                      ] = (wins + 1, ties, losses)
                             result = FinishedGame.WON
-                        elif result is FinishedGame.TIE:
-                            self.states[moves[i - 1]][moves[i]] = (wins, ties + 1, losses)
+                        elif result is FinishedGame.TIED:
+                            self.states[moves[i - 1]][moves[i]
+                                                      ] = (wins, ties + 1, losses)
                         else:
-                            self.states[moves[i - 1]][moves[i]] = (wins, ties, losses + 1)
+                            self.states[moves[i - 1]][moves[i]
+                                                      ] = (wins, ties, losses + 1)
                             result = FinishedGame.LOST
                         await asyncio.sleep(0)
                 if None is not self.train_until < datetime.now():
@@ -287,7 +291,8 @@ class MonteCarlo(GameTree[T], ABC):
                         raise exception
                     elif state is not None:
                         await states.put(state)
-                        trainer = asyncio.create_task(self._train_from_states(states))
+                        trainer = asyncio.create_task(
+                            self._train_from_states(states))
                 if state is None:
                     break
                 response = yield state
@@ -299,9 +304,11 @@ class MonteCarlo(GameTree[T], ABC):
                         raise exception
                     else:
                         await states.put(state)
-                        trainer = asyncio.create_task(self._train_from_states(states))
+                        trainer = asyncio.create_task(
+                            self._train_from_states(states))
                 if response is not None:
-                    raise TypeError("cannot .asend() during the opponent's turn")
+                    raise TypeError(
+                        "cannot .asend() during the opponent's turn")
                 next_moves = self.moves_after(state)
                 try:
                     async for next_move in next_moves:
@@ -362,14 +369,17 @@ class MonteCarlo(GameTree[T], ABC):
             try:
                 iterations = operator.index(iterations)
             except TypeError:
-                raise TypeError(f"could not interpret the number of iterations as an integer, got {iterations!r}") from None
+                raise TypeError(
+                    f"could not interpret the number of iterations as an integer, got {iterations!r}") from None
             if iterations <= 0:
-                raise ValueError(f"requires iterations > 0, got {iterations!r}")
+                raise ValueError(
+                    f"requires iterations > 0, got {iterations!r}")
         if seconds is not None:
             try:
                 seconds = float(seconds)
             except TypeError:
-                raise TypeError(f"could not interpret the number of seconds as a real value, got {seconds!r}") from None
+                raise TypeError(
+                    f"could not interpret the number of seconds as a real value, got {seconds!r}") from None
             if seconds < 0:
                 raise ValueError(f"requires seconds >= 0, got {seconds!r}")
         states = asyncio.Queue()
