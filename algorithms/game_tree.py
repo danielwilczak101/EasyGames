@@ -73,7 +73,7 @@ class MonteCarlo(GameTree[T], ABC):
                             moves.append(random.choices(
                                 next_moves,
                                 weights=[
-                                    (wins + ties / 2 + 1) / (wins + ties + losses + 1)
+                                    (2 * wins + ties + 1) / (wins + ties + losses + 1)
                                     for wins, ties, losses in self.states[moves[-1]].values()
                                 ],
                             )[0])
@@ -134,7 +134,7 @@ class MonteCarlo(GameTree[T], ABC):
         elif trainer.result() is not None:
             raise trainer.result()
         weights = [
-            (wins + ties / 2 + 1) / (wins + ties + losses + 1)
+            (2 * wins + ties + 1) / (wins + ties + losses + 1)
             for wins, ties, losses in self.states[state].values()
         ]
         best = max(range(len(weights)), key=lambda i: weights[i])
