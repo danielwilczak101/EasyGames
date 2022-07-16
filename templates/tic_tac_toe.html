@@ -5,19 +5,19 @@
         <table class="mt-5 table table-borderless">
             <tbody>
                 <tr>
+                    <td><button id="0" type="button" class="btn btn-primary">-</button></td>
                     <td><button id="1" type="button" class="btn btn-primary">-</button></td>
                     <td><button id="2" type="button" class="btn btn-primary">-</button></td>
-                    <td><button id="3" type="button" class="btn btn-primary">-</button></td>
                 </tr>
                 <tr>
+                    <td><button id="3" type="button" class="btn btn-primary">-</button></td>
                     <td><button id="4" type="button" class="btn btn-primary">-</button></td>
                     <td><button id="5" type="button" class="btn btn-primary">-</button></td>
-                    <td><button id="6" type="button" class="btn btn-primary">-</button></td>
                 </tr>
                 <tr>
+                    <td><button id="6" type="button" class="btn btn-primary">-</button></td>
                     <td><button id="7" type="button" class="btn btn-primary">-</button></td>
                     <td><button id="8" type="button" class="btn btn-primary">-</button></td>
-                    <td><button id="9" type="button" class="btn btn-primary">-</button></td>
                 </tr>
             </tbody>
         </table>
@@ -27,5 +27,51 @@
 </div>
 
 <script>
+
+
+    // Star functionality.
+    var points = 9
+    $(document).ready(function () {
+        for (let i = 0; i < points; i++) {
+            $("#" + i).click(function () {
+                // Get the state of the board and button clicked.
+                state = [];
+                for (let j = 0; j < points; j++) {
+                    if (i == j) {
+                        state.push("1");
+                        $("#" + i).attr("disabled", "disabled");
+                    } else {
+                        state.push($('#' + j).text());
+                    }
+                }
+
+                // Send the status plus the button clicked.
+                $.post("/game_tree", { map: JSON.stringify(state) })
+                    .done(function (data) {
+                        if (data["status"] != "continue") {
+                            alert(data["status"]);
+                        } else {
+                            // Update the state with the returned state.
+                            data["data"].forEach(function (value, i) {
+                                $("#" + i).text(value);
+                                if (value !== "-") {
+                                    // Disable the square if the value is not the default value.
+                                    $("#" + i).attr("disabled", "disabled");
+                                }
+                            });
+                        }
+
+
+
+
+
+
+                    });
+            });
+        }
+    });
+
+
+
 
 </script>
