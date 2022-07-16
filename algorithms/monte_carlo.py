@@ -92,8 +92,7 @@ class MonteCarlo(GameTree[T], ABC):
                             moves.append(random.choices(
                                 next_moves,
                                 weights=[
-                                    (2 * wins + ties + 1) /
-                                    (wins + ties + losses + 1)
+                                    min((2 * wins + ties + 1) / (wins + ties + losses + 1), 0.01)
                                     for wins, ties, losses in self.states[moves[-1]].values()
                                 ],
                             )[0])
