@@ -15,21 +15,139 @@ T = TypeVar("T", bound=Hashable)
 class FinishedGame(Exception, Enum):
     WON = 1
     TIE = 0
-    LOSS = -1
+    LOST = -1
 
 
 class GameTree(Protocol[T]):
 
-    async def move(self, state: T) -> T: ...
+    async def move(self, state: T) -> T:
+        """
+        Computes the next move.
 
-    async def moves_after(self, state: T) -> AsyncIterable[T]: ...
+        Parameters
+        -----------
+            state:
+                The current state.
 
-    async def play(self, state: Optional[T] = ...) -> AsyncGenerator[T, T]: ...
+        Returns
+        --------
+            state:
+                The AI's next move from the current state.
 
-    async def train(self) -> None: ...
+        Raises
+        -------
+            FinishedGame.(WON/TIED/LOST):
+                The AI won/tied/lost.
+
+        Usage
+        ------
+            try:
+                state = ai.move(state)
+            except FinishedGame:
+                ...
+        """
+        ...
+
+    async def moves_after(self, state: T) -> AsyncIterable[T]:
+        """
+        Computes the moves available from the current state.
+
+        Parameters
+        -----------
+            state:
+                The current state.
+
+        Returns
+        --------
+            moves:
+                The next possible move from the current state.
+
+        Raises
+        -------
+            FinishedGame.(WON/TIED/LOST):
+                The player that would make the next move has won/tied/lost.
+
+        Usage
+        ------
+            try:
+                async for move in ai.moves_after(state):
+                    ...
+            except FinishedGame:
+                ...
+        """
+        ...
+
+    async def play(self, state: Optional[T] = ...) -> AsyncGenerator[T, T]:
+        """
+        Creates a generator for playing games with the AI.
+
+        Parameters
+        -----------
+            state:
+                An initial state to play from.
+
+        Yields
+        -------
+            state:
+                The next move by the AI, or an initial state.
+
+        Receives
+        ---------
+            state:
+                The next move by whatever is playing with the AI.
+
+        Usage
+        ------
+            game = ai.play()
+            try:
+                async for move in game:
+                    # Check if valid moves remain.
+                    try:
+                        await ai.move(move)
+                    except FinishedGame as e:
+                        # Check if the player won/tied/lost.
+                        ...
+                        # Stop the game.
+                        break
+                    # Make a move.
+                    move = ...
+                # Game ended on the last move made by the player.
+                else:
+                    try:
+                        await game.asend(move)
+                    except FinishedGame as e:
+                        # Check if the ai won/tied/lost.
+                        ...
+            finally:
+                # Stop training the ai when the game finishes.
+                await game.aclose()
+        """
+        ...
+
+    async def train(
+        self,
+        iterations: Optional[int] = ...,
+        seconds: Optional[float] = ...,
+        state: Optional[T] = ...,
+    ) -> None:
+        """
+        Train the ai.
+
+        Parameters
+        -----------
+            iterations:
+                The number of iterations trained.
+            seconds:
+                The number of seconds trained.
+            state:
+                The initial state to train from.
+        """
+        ...
 
     @property
-    def initial_state(self) -> T: ...
+    def initial_state(self) -> T:
+        """The initial state of the game."""
+        ...
 
 
 class MonteCarlo(GameTree[T], ABC):
@@ -43,7 +161,42 @@ class MonteCarlo(GameTree[T], ABC):
         states: "asyncio.Queue[T]",
         iterations: Optional[int] = None,
     ) -> Optional[BaseException]:
-        ITERATIONS = 0
+        """
+        Trains in the background from a dynamically updating set of states.
+
+        Parameters
+        -----------
+            states:
+                A queue of incoming states.
+            iterations:
+                The maximum amount of iterations trained.
+
+        Returns
+        --------
+            exception:
+                None or an exception. Should be re-raised elsewhere.
+
+        Usage
+        ------
+            # Initial state to train on.
+            states = asyncio.Queue()
+            await states.put(initial_state)
+            trainer = asyncio.create_task(ai._train_from_states(states))
+
+            while ...:
+
+                # As the game progresses, keep the trainer updated.
+                await states.put(new_state)
+
+                # As the game progresses, check if the trainer stopped.
+                if trainer.done():
+                    break
+
+            # When the game finishes, stop the trainer and raise any exceptions.
+            exception = await trainer
+            if exception is not None:
+                raise exception
+        """
         try:
             state = await states.get()
             while True:
@@ -85,23 +238,47 @@ class MonteCarlo(GameTree[T], ABC):
                     result = e
                     for i in reversed(range(1, len(moves))):
                         wins, ties, losses = self.states[moves[i - 1]][moves[i]]
-                        if result is FinishedGame.LOSS:
+                        if result is FinishedGame.LOST:
                             self.states[moves[i - 1]][moves[i]] = (wins + 1, ties, losses)
                             result = FinishedGame.WON
                         elif result is FinishedGame.TIE:
                             self.states[moves[i - 1]][moves[i]] = (wins, ties + 1, losses)
                         else:
                             self.states[moves[i - 1]][moves[i]] = (wins, ties, losses + 1)
-                            result = FinishedGame.LOSS
+                            result = FinishedGame.LOST
                         await asyncio.sleep(0)
                 if states.qsize() > 0:
                     state = await states.get()
-                ITERATIONS += 1
                 await asyncio.sleep(0)
         except BaseException as e:
             return e
 
     async def move(self, state: T) -> T:
+        """
+        Computes the next move.
+
+        Parameters
+        -----------
+            state:
+                The current state.
+
+        Returns
+        --------
+            state:
+                The AI's next move from the current state.
+
+        Raises
+        -------
+            FinishedGame.(WON/TIED/LOST):
+                The AI won/tied/lost.
+
+        Usage
+        ------
+            try:
+                state = ai.move(state)
+            except FinishedGame:
+                ...
+        """
         _next_moves = self.moves_after(state)
         try:
             next_moves = [
@@ -145,9 +322,80 @@ class MonteCarlo(GameTree[T], ABC):
                 return move
 
     @abstractmethod
-    async def moves_after(self, state: T) -> AsyncIterable[T]: ...
+    async def moves_after(self, state: T) -> AsyncIterable[T]:
+        """
+        Computes the moves available from the current state.
+
+        Parameters
+        -----------
+            state:
+                The current state.
+
+        Returns
+        --------
+            moves:
+                The next possible move from the current state.
+
+        Raises
+        -------
+            FinishedGame.(WON/TIED/LOST):
+                The player that would make the next move has won/tied/lost.
+
+        Usage
+        ------
+            try:
+                async for move in ai.moves_after(state):
+                    ...
+            except FinishedGame:
+                ...
+        """
+        ...
 
     async def play(self, state: Optional[T] = None) -> AsyncGenerator[T, T]:
+        """
+        Creates a generator for playing games with the AI.
+
+        Parameters
+        -----------
+            state:
+                An initial state to play from.
+
+        Yields
+        -------
+            state:
+                The next move by the AI, or an initial state.
+
+        Receives
+        ---------
+            state:
+                The next move by whatever is playing with the AI.
+
+        Usage
+        ------
+            game = ai.play()
+            try:
+                async for move in game:
+                    # Check if valid moves remain.
+                    try:
+                        await ai.move(move)
+                    except FinishedGame as e:
+                        # Check if the player won/tied/lost.
+                        ...
+                        # Stop the game.
+                        break
+                    # Make a move.
+                    move = ...
+                # Game ended on the last move made by the player.
+                else:
+                    try:
+                        await game.asend(move)
+                    except FinishedGame as e:
+                        # Check if the ai won/tied/lost.
+                        ...
+            finally:
+                # Stop training the ai when the game finishes.
+                await game.aclose()
+        """
         if state is None:
             state = self.initial_state
         states = asyncio.Queue()
@@ -173,7 +421,7 @@ class MonteCarlo(GameTree[T], ABC):
                 except FinishedGame:
                     break
                 finally:
-                    if isinstance(_next_moves, AsyncGenerator):
+                    if isinstance(next_moves, AsyncGenerator):
                         await next_moves.aclose()
                 try:
                     state = await self.move(state)
@@ -204,7 +452,24 @@ class MonteCarlo(GameTree[T], ABC):
                 elif trainer.result() is not None:
                     raise trainer.result()
 
-    async def train(self, iterations: Optional[int] = 1_000_000, seconds: Optional[float] = 10.0, state: Optional[T] = None) -> None:
+    async def train(
+        self,
+        iterations: Optional[int] = 1_000_000,
+        seconds: Optional[float] = 10.0,
+        state: Optional[T] = None,
+    ) -> None:
+        """
+        Train the ai.
+
+        Parameters
+        -----------
+            iterations:
+                The number of iterations trained.
+            seconds:
+                The number of seconds trained.
+            state:
+                The initial state to train from.
+        """
         if iterations is not None:
             try:
                 iterations = operator.index(iterations)
@@ -228,7 +493,9 @@ class MonteCarlo(GameTree[T], ABC):
 
     @property
     @abstractmethod
-    def initial_state(self) -> T: ...
+    def initial_state(self) -> T:
+        """The initial state of the game."""
+        ...
 
 
 Player = Literal[0, 1, 2]
@@ -251,6 +518,32 @@ BOARD_STRING = """
 class TicTacToe(MonteCarlo[Board]):
 
     async def moves_after(self, state: Board) -> AsyncIterator[Board]:
+        """
+        Computes the moves available from the current state.
+
+        Parameters
+        -----------
+            state:
+                The current state.
+
+        Returns
+        --------
+            moves:
+                The next possible move from the current state.
+
+        Raises
+        -------
+            FinishedGame.(WON/TIED/LOST):
+                The player that would make the next move has won/tied/lost.
+
+        Usage
+        ------
+            try:
+                async for move in ai.moves_after(state):
+                    ...
+            except FinishedGame:
+                ...
+        """
         is_player_one = state.count(0) % 2 == 1
         for s in (
             # Horizontal 3 in a row.
@@ -269,10 +562,10 @@ class TicTacToe(MonteCarlo[Board]):
                 if is_player_one:
                     raise FinishedGame.WON
                 else:
-                    raise FinishedGame.LOSS
+                    raise FinishedGame.LOST
             elif state[s].count(2) == 3:
                 if is_player_one:
-                    raise FinishedGame.LOSS
+                    raise FinishedGame.LOST
                 else:
                     raise FinishedGame.WON
         # No moves left.
@@ -288,10 +581,19 @@ class TicTacToe(MonteCarlo[Board]):
 
     @property
     def initial_state(self) -> Board:
+        """The initial state of the game is an empty board."""
         return (0,) * 9
 
 
 async def main() -> TicTacToe:
+    """
+    Run to play tic-tac-toe.
+
+    Returns
+    --------
+        ttt:
+            The tic-tac-toe AI.
+    """
     ttt = TicTacToe()
     while True:
         game = ttt.play()
@@ -340,7 +642,7 @@ async def main() -> TicTacToe:
                 else:
                     assert False, "Game should only end if someone won."
         finally:
-            game.aclose()
+            await game.aclose()
         while True:
             play_again = (await ainput("Play again? (Y/N) ")).upper()
             if play_again == "Y" or play_again == "N":
