@@ -48,18 +48,18 @@
                 // Send the status plus the button clicked.
                 $.post("/game_tree", { map: JSON.stringify(state) })
                     .done(function (data) {
+                        // Update the state with the returned state.
+                        data["data"].forEach(function (value, i) {
+                            $("#" + i).text(value);
+                            if (value !== "-") {
+                                // Disable the square if the value is not the default value.
+                                $("#" + i).attr("disabled", "disabled");
+                            }
+                        });
+
                         if (data["status"] != "continue") {
                             alert(data["status"]);
                             location.reload();
-                        } else {
-                            // Update the state with the returned state.
-                            data["data"].forEach(function (value, i) {
-                                $("#" + i).text(value);
-                                if (value !== "-") {
-                                    // Disable the square if the value is not the default value.
-                                    $("#" + i).attr("disabled", "disabled");
-                                }
-                            });
                         }
                     });
             });

@@ -20,21 +20,23 @@ def index():
 async def parse_request():
     # Grab the state of the map plus the move.
     board = json.loads(request.form['map'])
+    indexes = await ttt.move(tuple("-12".index(value) for value in board))
+    new_board = [
+        "-12"[index]
+        for index in indexes
+    ]
 
     try:
-        indexes = await ttt.move(tuple("-12".index(value) for value in board))
-        new_board = [
-            "-12"[index]
-            for index in indexes
-        ]
+        await ttt.move(indexes)
         return jsonify({"status": "continue", "data": new_board})
+
     except FinishedGame as e:
         if e is FinishedGame.WON:
-            return jsonify({"status": "A.I Win's", "data": ""})
+            return jsonify({"status": "You Win", "data": new_board})
         elif e is FinishedGame.TIED:
-            return jsonify({"status": "Tied", "data": ""})
+            return jsonify({"status": "Tied", "data": new_board})
         else:
-            return jsonify({"status": "You win", "data": ""})
+            return jsonify({"status": "A.I win's!", "data": new_board})
 
 
 if __name__ == '__main__':
