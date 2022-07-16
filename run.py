@@ -17,7 +17,7 @@ def parse_request():
     # A.I changed move
     map[7] = "2"
     print(map)
-    return jsonify({"status": "Pc lost", "data": map})
+    return jsonify({"status": "continue", "data": map})
 
 
 if __name__ == '__main__':
