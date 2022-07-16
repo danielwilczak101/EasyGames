@@ -7,5 +7,5 @@ class FinishedGame(Exception, Enum):
     move is requested.
     """
     WON = 1
-    TIE = 0
+    TIED = 0
     LOST = -1

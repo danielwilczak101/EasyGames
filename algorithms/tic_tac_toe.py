@@ -80,7 +80,7 @@ class TicTacToe(MonteCarlo[Board]):
                     raise FinishedGame.WON
         # No moves left.
         if 0 not in state:
-            raise FinishedGame.TIE
+            raise FinishedGame.TIED
         new_state = list(state)
         player = 1 if is_player_one else 2
         for i, b in enumerate(new_state):
@@ -105,47 +105,6 @@ async def main() -> TicTacToe:
             The tic-tac-toe AI.
     """
     ttt = TicTacToe()
-    board = ttt.initial_state
-    new_board = None
-    while True:
-        if new_board is not None:
-            for i, (b1, b2) in enumerate(zip(board, new_board)):
-                if b1 != b2:
-                    print(f"AI move: {'ABC'[i % 3] + '123'[i // 3]}")
-                    break
-        print(BOARD_STRING.format(*board))
-        try:
-            await ttt.move(board)
-        except FinishedGame as e:
-            if e is FinishedGame.WON:
-                print("Congratulations! You won!")
-            elif e is FinishedGame.TIE:
-                print("Well... nobody won.")
-            else:
-                print("Better luck next time, the AI won.")
-            break
-        while True:
-            move = await ainput("move (e.g. A2): ")
-            if len(move) != 2 or move[0] not in "ABC" or move[1] not in "123":
-                print("illegal move, use (ABC)(123) e.g. A2")
-                continue
-            index = "ABC".index(move[0]) + "123".index(move[1]) * 3
-            if board[index] != 0:
-                print(f"illegal move, {move} is already taken")
-                continue
-            break
-        new_board = board = (*board[:index], 1, *board[index + 1:])
-        print(BOARD_STRING.format(*board))
-        try:
-            board = await ttt.move(board)
-        except FinishedGame as e:
-            if e is FinishedGame.WON:
-                print("Better luck next time, the AI won.")
-            elif e is FinishedGame.TIE:
-                print("Well... nobody won.")
-            else:
-                print("Congratulations! You won!")
-    return ttt
     while True:
         game = ttt.play()
         try:
@@ -162,7 +121,7 @@ async def main() -> TicTacToe:
                 except FinishedGame as e:
                     if e is FinishedGame.WON:
                         print("Congratulations! You won!")
-                    elif e is FinishedGame.TIE:
+                    elif e is FinishedGame.TIED:
                         print("Well... nobody won.")
                     else:
                         print("Better luck next time, the AI won.")
@@ -186,7 +145,7 @@ async def main() -> TicTacToe:
                 except FinishedGame as e:
                     if e is FinishedGame.WON:
                         print("Better luck next time, the AI won.")
-                    elif e is FinishedGame.TIE:
+                    elif e is FinishedGame.TIED:
                         print("Well... nobody won.")
                     else:
                         print("Congratulations! You won!")
