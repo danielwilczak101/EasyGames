@@ -61,7 +61,8 @@ class MonteCarlo(GameTree[T], ABC):
                                 async for move in _next_moves
                             ]
                         finally:
-                            await _next_moves.aclose()
+                            if isinstance(_next_moves, AsyncGenerator):
+                                await _next_moves.aclose()
                         if moves[-1] not in self.states:
                             self.states[moves[-1]] = {
                                 move: (0, 0, 0)
@@ -108,7 +109,8 @@ class MonteCarlo(GameTree[T], ABC):
                 async for move in _next_moves
             ]
         finally:
-            await _next_moves.aclose()
+            if isinstance(_next_moves, AsyncGenerator):
+                await _next_moves.aclose()
         states = asyncio.Queue()
         await states.put(state)
         trainer = asyncio.create_task(self._train_from_states(states))
@@ -171,7 +173,8 @@ class MonteCarlo(GameTree[T], ABC):
                 except FinishedGame:
                     break
                 finally:
-                    await next_moves.aclose()
+                    if isinstance(_next_moves, AsyncGenerator):
+                        await next_moves.aclose()
                 try:
                     state = await self.move(state)
                 except FinishedGame:
