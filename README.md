@@ -10,8 +10,17 @@ Games that are played by A.I and humans.
   src="https://raw.githubusercontent.com/danielwilczak101/EasyGames/main/static/images/tictactoe.png">
 </p>
 
-Clone the repository and install the requirements from the requirements.txt. Then run the game using:
+To grab and install the necessary files.
+```bash
+gitclone https://github.com/danielwilczak101/EasyGames.git
+python3 -m venv venv
+source venv/bin/activate
+pip3 install -r requirements.txt
+```
 
+To play the game.
 ```bash
 python3 tictactoe.py
 ```
+
+Then go to your browser and enter. ``http://127.0.0.1:80`` To have others on your network play then use the other ip: ``http://192.168.1***:80  ``
