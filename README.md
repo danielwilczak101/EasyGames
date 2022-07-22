@@ -6,7 +6,8 @@ Games that are played by A.I and humans.
 ### Tic-Tac-Toe with Monti-Carlo Decision Tree A.I
 
 <p align="center">
-  <img width="460" height="300" src="#">
+  <img width="460" height="300" 
+  src="https://raw.githubusercontent.com/danielwilczak101/EasyGames/main/static/images/tictactoe.png">
 </p>
 
 ```Python
