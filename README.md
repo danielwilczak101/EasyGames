@@ -5,7 +5,9 @@ Games that are played by A.I and humans.
 
 ### Tic-Tac-Toe with Monti-Carlo Decision Tree A.I
 
-IMAGE GOES HERE
+<p align="center">
+  <img width="460" height="300" src="#">
+</p>
 
 ```Python
 from flask import Flask, jsonify, render_template, request
