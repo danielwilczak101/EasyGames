@@ -10,15 +10,17 @@ Games that are played by A.I and humans.
   src="https://raw.githubusercontent.com/danielwilczak101/EasyGames/main/static/images/tictactoe.png">
 </p>
 
+#### Install
 To grab and install the necessary files.
 ```bash
-gitclone https://github.com/danielwilczak101/EasyGames.git
+git clone https://github.com/danielwilczak101/EasyGames.git
+cd EasyGames
 python3 -m venv venv
 source venv/bin/activate
 pip3 install -r requirements.txt
 ```
 
-To play the game.
+#### To play a game.
 ```bash
 python3 tictactoe.py
 ```
